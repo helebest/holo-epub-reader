@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+.venv/
+
+# Build artifacts
+build/
+dist/
+
+# Local outputs
+out/
+out_md/
+epub_books/
+
+# OS
+.DS_Store

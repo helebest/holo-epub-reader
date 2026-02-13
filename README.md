@@ -17,9 +17,6 @@ uv run pytest
 ```bash
 # 部署到 OpenClaw skills 目录
 ./deploy_skill.sh <target-path>
-
-# 示例
-./deploy_skill.sh /mnt/usb/holobot/.openclaw/skills/epub-reader
 ```
 
 部署后的目录结构：

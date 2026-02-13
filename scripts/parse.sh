@@ -18,10 +18,12 @@ if [ ! -f "$EPUB_PATH" ]; then
     exit 1
 fi
 
+# 获取脚本所在目录（也是项目根目录）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 # 获取绝对路径
 EPUB_PATH=$(realpath "$EPUB_PATH")
-PROJECT_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}"/../.. && pwd)
-cd "$PROJECT_ROOT"
 
 # 运行解析
 echo "正在解析: $EPUB_PATH"

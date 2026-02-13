@@ -2,16 +2,54 @@
 
 Parse EPUB files into LLM-friendly text and image blocks.
 
-Source layout uses `src/epub_reader`.
+## 开发
 
-Run without installing (offline-friendly):
 ```bash
-PYTHONPATH=./src uv run --no-project --isolated --no-sync python -m epub_reader.cli parse /path/to/book.epub --out /path/to/out
+# 安装依赖
+uv sync
+
+# 运行测试
+uv run pytest
 ```
 
-Run after install:
+## 部署
+
 ```bash
-uv run epub-reader parse /path/to/book.epub --out /path/to/out
+# 部署到 OpenClaw skills 目录
+./deploy_skill.sh <target-path>
+
+# 示例
+./deploy_skill.sh /mnt/usb/holobot/.openclaw/skills/epub-reader
 ```
 
-Default output is Markdown (`content.md`).
+部署后的目录结构：
+
+```
+skill-name/
+├── SKILL.md
+└── scripts/
+    ├── parse.sh
+    ├── validate.sh
+    ├── cli.py
+    ├── epub.py
+    ├── reader.py
+    └── ...
+```
+
+## 使用
+
+```bash
+# 解析 EPUB
+bash <skill-path>/scripts/parse.sh <epub文件路径> [输出目录]
+
+# 验证输出
+bash <skill-path>/scripts/validate.sh <输出目录>
+```
+
+## 输出
+
+默认输出为 Markdown (`content.md`)，包含：
+- 文本块
+- 标题层级
+- 图像（保存到 `images/` 目录）
+- 元数据 (`manifest.json`)

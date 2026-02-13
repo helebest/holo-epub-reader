@@ -32,7 +32,6 @@ mkdir -p "$TARGET_PATH"
 DEPLOY_ITEMS=(
     "SKILL.md"
     "scripts"
-    "pyproject.toml"
 )
 
 # Copy each item

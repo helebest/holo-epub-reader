@@ -26,11 +26,14 @@ cd "$PROJECT_ROOT"
 # 获取绝对路径
 EPUB_PATH=$(realpath "$EPUB_PATH")
 
+# 使用系统 Python
+PYTHON_CMD="python3"
+
 # 运行解析
 echo "正在解析: $EPUB_PATH"
 echo "输出目录: $OUTPUT_DIR"
 
-uv run python scripts/cli.py parse "$EPUB_PATH" --out "$OUTPUT_DIR"
+$PYTHON_CMD scripts/cli.py parse "$EPUB_PATH" --out "$OUTPUT_DIR"
 
 if [ $? -eq 0 ]; then
     echo "✅ 解析成功!"

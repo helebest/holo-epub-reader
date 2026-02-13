@@ -24,9 +24,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
+# 使用系统 Python
+PYTHON_CMD="python3"
+
 # 运行验证
 echo "正在验证: $OUTPUT_DIR"
-uv run python scripts/cli.py validate "$OUTPUT_DIR"
+$PYTHON_CMD scripts/cli.py validate "$OUTPUT_DIR"
 
 if [ $? -eq 0 ]; then
     echo "✅ 验证成功!"

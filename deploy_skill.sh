@@ -33,6 +33,7 @@ DEPLOY_ITEMS=(
     "SKILL.md"
     "scripts"
     "epub_reader"
+    "pyproject.toml"
 )
 
 # Copy each item

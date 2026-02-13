@@ -32,6 +32,7 @@ mkdir -p "$TARGET_PATH"
 DEPLOY_ITEMS=(
     "SKILL.md"
     "scripts"
+    "epub_reader"
 )
 
 # Copy each item

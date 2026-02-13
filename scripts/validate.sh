@@ -19,7 +19,10 @@ if [ ! -d "$OUTPUT_DIR" ]; then
     exit 1
 fi
 
-cd /mnt/usb/projects/epub-reader
+# 获取脚本所在目录，然后切换到项目根目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
 
 # 运行验证
 echo "正在验证: $OUTPUT_DIR"

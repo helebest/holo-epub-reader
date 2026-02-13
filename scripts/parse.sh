@@ -18,9 +18,10 @@ if [ ! -f "$EPUB_PATH" ]; then
     exit 1
 fi
 
-# 获取脚本所在目录（也是项目根目录）
+# 获取脚本所在目录，然后切换到项目根目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
 
 # 获取绝对路径
 EPUB_PATH=$(realpath "$EPUB_PATH")

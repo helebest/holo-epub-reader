@@ -26,8 +26,8 @@ cd "$PROJECT_ROOT"
 # 获取绝对路径
 EPUB_PATH=$(realpath "$EPUB_PATH")
 
-# 使用系统 Python
-PYTHON_CMD="python3"
+# 使用全局 venv（依赖由 openclaw_deploy_skill.sh 安装）
+PYTHON_CMD="$HOME/.openclaw/.venv/bin/python3"
 
 # 运行解析
 echo "正在解析: $EPUB_PATH"

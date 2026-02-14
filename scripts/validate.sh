@@ -24,8 +24,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-# 使用系统 Python
-PYTHON_CMD="python3"
+# 使用全局 venv（依赖由 openclaw_deploy_skill.sh 安装）
+PYTHON_CMD="$HOME/.openclaw/.venv/bin/python3"
 
 # 运行验证
 echo "正在验证: $OUTPUT_DIR"

@@ -16,7 +16,7 @@ uv run pytest
 
 ```bash
 # 部署到 OpenClaw skills 目录
-./deploy_skill.sh <target-path>
+./openclaw_deploy_skill.sh <target-path>
 ```
 
 部署后的目录结构：

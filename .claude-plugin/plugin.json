@@ -1,0 +1,9 @@
+{
+  "name": "holo-epub-reader",
+  "version": "0.2.0",
+  "description": "Parse EPUB files into LLM-friendly Markdown text and image blocks.",
+  "author": { "name": "holo" },
+  "homepage": "https://github.com/helebest/holo-epub-reader",
+  "repository": "https://github.com/helebest/holo-epub-reader",
+  "license": "MIT"
+}

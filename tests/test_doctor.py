@@ -6,23 +6,24 @@ import subprocess
 from holo_epub_reader.doctor import DoctorResult, run_doctor
 
 
+def _ok_runner(_command):
+    return subprocess.CompletedProcess(
+        args=[],
+        returncode=0,
+        stdout='{"major": 3, "minor": 11, "micro": 6}',
+        stderr="",
+    )
+
+
 def test_doctor_success(tmp_path: Path, monkeypatch) -> None:
     home = tmp_path / "home"
     python_path = home / ".openclaw" / ".venv" / "bin" / "python3"
     python_path.parent.mkdir(parents=True)
     python_path.write_text("#!/bin/sh\n", encoding="utf-8")
 
-    def fake_runner(_command):
-        return subprocess.CompletedProcess(
-            args=[],
-            returncode=0,
-            stdout='{"major": 3, "minor": 11, "micro": 6}',
-            stderr="",
-        )
-
     monkeypatch.setattr("os.access", lambda _path, _mode: True)
 
-    result = run_doctor(env={"HOME": str(home)}, run_command=fake_runner)
+    result = run_doctor(env={"HOME": str(home)}, run_command=_ok_runner)
 
     assert result == DoctorResult(
         ok=True,
@@ -32,11 +33,52 @@ def test_doctor_success(tmp_path: Path, monkeypatch) -> None:
     )
 
 
-def test_doctor_fails_when_home_missing() -> None:
+def test_doctor_success_with_epub_reader_python(tmp_path: Path, monkeypatch) -> None:
+    """EPUB_READER_PYTHON env var is used when set."""
+    custom_python = tmp_path / "custom" / "python3"
+    custom_python.parent.mkdir(parents=True)
+    custom_python.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    monkeypatch.setattr("os.access", lambda _path, _mode: True)
+
+    result = run_doctor(
+        env={"EPUB_READER_PYTHON": str(custom_python)},
+        run_command=_ok_runner,
+    )
+
+    assert result.ok
+    assert result.python_path == custom_python
+    assert result.python_version == "3.11.6"
+
+
+def test_doctor_env_var_takes_priority(tmp_path: Path, monkeypatch) -> None:
+    """EPUB_READER_PYTHON takes priority over OpenClaw path."""
+    custom_python = tmp_path / "custom" / "python3"
+    custom_python.parent.mkdir(parents=True)
+    custom_python.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    home = tmp_path / "home"
+    openclaw_python = home / ".openclaw" / ".venv" / "bin" / "python3"
+    openclaw_python.parent.mkdir(parents=True)
+    openclaw_python.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    monkeypatch.setattr("os.access", lambda _path, _mode: True)
+
+    result = run_doctor(
+        env={"EPUB_READER_PYTHON": str(custom_python), "HOME": str(home)},
+        run_command=_ok_runner,
+    )
+
+    assert result.ok
+    assert result.python_path == custom_python
+
+
+def test_doctor_fails_no_candidates() -> None:
+    """No HOME and no EPUB_READER_PYTHON means no candidates."""
     result = run_doctor(env={})
     assert not result.ok
     assert result.python_path is None
-    assert result.errors == ["HOME environment variable is not set."]
+    assert "No Python interpreter found" in result.errors[0]
 
 
 def test_doctor_fails_when_python_missing(tmp_path: Path) -> None:
@@ -46,7 +88,7 @@ def test_doctor_fails_when_python_missing(tmp_path: Path) -> None:
     result = run_doctor(env={"HOME": str(home)})
 
     assert not result.ok
-    assert "Required Python interpreter not found" in result.errors[0]
+    assert "not found" in result.errors[0]
 
 
 def test_doctor_fails_when_python_not_executable(tmp_path: Path, monkeypatch) -> None:
@@ -60,7 +102,6 @@ def test_doctor_fails_when_python_not_executable(tmp_path: Path, monkeypatch) ->
     result = run_doctor(env={"HOME": str(home)})
 
     assert not result.ok
-    assert result.python_path == python_path
     assert "not executable" in result.errors[0]
 
 
@@ -83,7 +124,6 @@ def test_doctor_fails_when_version_too_low(tmp_path: Path, monkeypatch) -> None:
     result = run_doctor(env={"HOME": str(home)}, run_command=fake_runner)
 
     assert not result.ok
-    assert result.python_version == "3.9.18"
     assert "below minimum 3.10" in result.errors[0]
 
 

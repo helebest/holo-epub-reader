@@ -6,6 +6,9 @@ import zipfile
 
 import pytest
 
+from holo_epub_reader.epub import _first_text, read_container, resolve_href
+from holo_epub_reader.html_extract import _chunk_text, _normalize_title, _is_placeholder_title
+from holo_epub_reader.models import Block
 from holo_epub_reader.reader import EpubParseError, parse_epub, validate_output
 
 
@@ -82,6 +85,51 @@ def _create_epub(
                 zf.write(path, path.relative_to(root))
 
     return epub_path
+
+
+def test_block_to_dict_filters_none() -> None:
+    block = Block(id="b1", type="text", chapter="ch1", order=0, text="hello")
+    d = block.to_dict()
+    assert d["text"] == "hello"
+    assert "image" not in d
+    assert "alt" not in d
+
+
+def test_first_text_returns_none_for_none() -> None:
+    assert _first_text(None) is None
+
+
+def test_read_container_missing_rootfile() -> None:
+    xml = b'<?xml version="1.0"?><container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles></rootfiles></container>'
+    with pytest.raises(ValueError, match="missing rootfile"):
+        read_container(xml)
+
+
+def test_read_container_missing_full_path() -> None:
+    xml = b'<?xml version="1.0"?><container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile /></rootfiles></container>'
+    with pytest.raises(ValueError, match="missing full-path"):
+        read_container(xml)
+
+
+def test_resolve_href_empty_base_dir() -> None:
+    result = resolve_href("", "chapter1.xhtml")
+    assert result == "chapter1.xhtml"
+
+
+def test_chunk_text_splits_by_words() -> None:
+    text = "one two three four five"
+    chunks = _chunk_text(text, 10)
+    assert len(chunks) > 1
+    assert all(len(c) <= 12 for c in chunks)  # allow word boundary
+
+
+def test_normalize_title_none() -> None:
+    assert _normalize_title(None) is None
+
+
+def test_is_placeholder_title_empty() -> None:
+    assert _is_placeholder_title("") is True
+    assert _is_placeholder_title(None) is True
 
 
 def test_parse_and_validate_happy_path(tmp_path: Path) -> None:
@@ -219,6 +267,154 @@ def test_validate_output_invalid_manifest_json(tmp_path: Path) -> None:
     ok, errors = validate_output(out_dir)
     assert not ok
     assert "manifest.json is invalid JSON" in errors
+
+
+def test_parse_raises_when_epub_not_found(tmp_path: Path) -> None:
+    fake = tmp_path / "nonexistent.epub"
+    with pytest.raises(FileNotFoundError, match="EPUB not found"):
+        parse_epub(fake, tmp_path / "out")
+
+
+def test_parse_text_chunk_splits_long_text(tmp_path: Path) -> None:
+    """Cover _chunk_text word-splitting logic (html_extract lines 24-41)."""
+    long_text = " ".join(["word"] * 200)
+    body = f"<h1>Chapter One</h1><p>{long_text}</p>"
+    epub_path = _create_epub(tmp_path, body=body, include_image_tag=False)
+    out_dir = tmp_path / "out"
+
+    parse_epub(epub_path, out_dir, include_images=False, max_chunk_chars=50)
+    content = (out_dir / "content.md").read_text(encoding="utf-8")
+    assert "word" in content
+
+
+def test_parse_keeps_nav_content(tmp_path: Path) -> None:
+    """Cover ignore_stack logic (html_extract lines 91-92, 200)."""
+    body = """
+    <h1>Chapter One</h1>
+    <nav><p>Navigation content</p></nav>
+    <p>Main text</p>
+    """
+    epub_path = _create_epub(tmp_path, body=body, include_image_tag=False)
+    out_dir = tmp_path / "out"
+
+    parse_epub(epub_path, out_dir, include_images=False, strip_nav=False)
+    content = (out_dir / "content.md").read_text(encoding="utf-8")
+    assert "Navigation content" in content
+
+
+def test_parse_strips_nav_by_default(tmp_path: Path) -> None:
+    """Verify nav stripping (html_extract lines 91-92, 200)."""
+    body = """
+    <h1>Chapter One</h1>
+    <nav><p>Navigation content</p></nav>
+    <p>Main text</p>
+    """
+    epub_path = _create_epub(tmp_path, body=body, include_image_tag=False)
+    out_dir = tmp_path / "out"
+
+    parse_epub(epub_path, out_dir, include_images=False, strip_nav=True)
+    content = (out_dir / "content.md").read_text(encoding="utf-8")
+    assert "Navigation content" not in content
+    assert "Main text" in content
+
+
+def test_parse_chapter_separator_between_chapters(tmp_path: Path) -> None:
+    """Cover chapter separator lines (reader lines 65-66).
+
+    Create an EPUB with two spine items to trigger chapter transitions.
+    """
+    root = tmp_path / "sample"
+    meta_inf = root / "META-INF"
+    oebps = root / "OEBPS"
+    meta_inf.mkdir(parents=True)
+    oebps.mkdir(parents=True)
+
+    container_xml = """<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" />
+  </rootfiles>
+</container>
+"""
+    (meta_inf / "container.xml").write_text(container_xml, encoding="utf-8")
+
+    content_opf = """<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Multi</dc:title>
+    <dc:creator>Tester</dc:creator>
+  </metadata>
+  <manifest>
+    <item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml" />
+    <item id="ch2" href="ch2.xhtml" media-type="application/xhtml+xml" />
+  </manifest>
+  <spine>
+    <itemref idref="ch1" />
+    <itemref idref="ch2" />
+  </spine>
+</package>
+"""
+    (oebps / "content.opf").write_text(content_opf, encoding="utf-8")
+
+    ch1 = """<?xml version="1.0"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<body><h1>Chapter One</h1><p>Text one.</p></body>
+</html>
+"""
+    ch2 = """<?xml version="1.0"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<body><h1>Chapter Two</h1><p>Text two.</p></body>
+</html>
+"""
+    (oebps / "ch1.xhtml").write_text(ch1, encoding="utf-8")
+    (oebps / "ch2.xhtml").write_text(ch2, encoding="utf-8")
+
+    epub_path = tmp_path / "multi.epub"
+    with zipfile.ZipFile(epub_path, "w") as zf:
+        for path in root.rglob("*"):
+            if path.is_file():
+                zf.write(path, path.relative_to(root))
+
+    out_dir = tmp_path / "out"
+    parse_epub(epub_path, out_dir, include_images=False)
+    content = (out_dir / "content.md").read_text(encoding="utf-8")
+
+    assert "## Chapter One" in content
+    assert "## Chapter Two" in content
+    assert "---" in content
+
+
+def test_parse_heading_after_list_ends_list(tmp_path: Path) -> None:
+    """Cover in_list reset on heading (reader lines 75-76) and text (92-93)."""
+    body = """
+    <h1>Chapter One</h1>
+    <ul><li>item1</li><li>item2</li></ul>
+    <h2>Next Section</h2>
+    <ul><li>item3</li></ul>
+    <p>Paragraph after list</p>
+    """
+    epub_path = _create_epub(tmp_path, body=body, include_image_tag=False)
+    out_dir = tmp_path / "out"
+
+    parse_epub(epub_path, out_dir, include_images=False)
+    content = (out_dir / "content.md").read_text(encoding="utf-8")
+    assert "- item1" in content
+    assert "### Next Section" in content
+    assert "Paragraph after list" in content
+
+
+def test_parse_invalid_ol_start_attribute(tmp_path: Path) -> None:
+    """Cover ValueError on invalid ol start (html_extract lines 104-105)."""
+    body = """
+    <h1>Chapter One</h1>
+    <ol start="abc"><li>Item</li></ol>
+    """
+    epub_path = _create_epub(tmp_path, body=body, include_image_tag=False)
+    out_dir = tmp_path / "out"
+
+    parse_epub(epub_path, out_dir, include_images=False)
+    content = (out_dir / "content.md").read_text(encoding="utf-8")
+    assert "1. Item" in content
 
 
 def test_validate_output_reports_missing_image_file(tmp_path: Path) -> None:

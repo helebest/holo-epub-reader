@@ -5,10 +5,11 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 from typing import Callable, Mapping, Sequence
 
 MIN_PYTHON_VERSION = (3, 10)
-REQUIRED_PYTHON_RELATIVE = Path(".openclaw") / ".venv" / "bin" / "python3"
+OPENCLAW_PYTHON_RELATIVE = Path(".openclaw") / ".venv" / "bin" / "python3"
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,36 @@ def _parse_version_payload(raw_stdout: str) -> tuple[int, int, int]:
     return major, minor, micro
 
 
+def resolve_python(
+    env: Mapping[str, str],
+    *,
+    include_current: bool = False,
+) -> list[Path]:
+    """Return candidate Python paths in priority order.
+
+    Resolution chain:
+    1. ``EPUB_READER_PYTHON`` env var (explicit override)
+    2. ``sys.executable`` (current interpreter, when *include_current* is True)
+    3. ``$HOME/.openclaw/.venv/bin/python3`` (OpenClaw legacy fallback)
+    """
+    candidates: list[Path] = []
+
+    explicit = env.get("EPUB_READER_PYTHON")
+    if explicit:
+        candidates.append(Path(explicit))
+
+    # The current interpreter is the most accurate choice when running the CLI
+    # directly — it is the Python actually executing the code.
+    if include_current:
+        candidates.append(Path(sys.executable))
+
+    home = env.get("HOME")
+    if home:
+        candidates.append(Path(home) / OPENCLAW_PYTHON_RELATIVE)
+
+    return candidates
+
+
 def run_doctor(
     *,
     env: Mapping[str, str] | None = None,
@@ -42,89 +73,87 @@ def run_doctor(
     runtime_env = os.environ if env is None else env
     runner = _default_runner if run_command is None else run_command
 
-    home = runtime_env.get("HOME")
-    if not home:
+    # Include sys.executable when using the real environment (default call).
+    candidates = resolve_python(runtime_env, include_current=(env is None))
+    if not candidates:
         return DoctorResult(
             ok=False,
             python_path=None,
             python_version=None,
-            errors=["HOME environment variable is not set."],
-        )
-
-    python_path = Path(home) / REQUIRED_PYTHON_RELATIVE
-    if not python_path.exists():
-        return DoctorResult(
-            ok=False,
-            python_path=python_path,
-            python_version=None,
-            errors=[f"Required Python interpreter not found: {python_path}"],
-        )
-
-    if not os.access(python_path, os.X_OK):
-        return DoctorResult(
-            ok=False,
-            python_path=python_path,
-            python_version=None,
-            errors=[f"Required Python interpreter is not executable: {python_path}"],
-        )
-
-    command = [
-        str(python_path),
-        "-c",
-        (
-            "import json, sys; "
-            "print(json.dumps({'major': sys.version_info[0], "
-            "'minor': sys.version_info[1], 'micro': sys.version_info[2]}))"
-        ),
-    ]
-
-    try:
-        completed = runner(command)
-    except OSError as exc:
-        return DoctorResult(
-            ok=False,
-            python_path=python_path,
-            python_version=None,
-            errors=[f"Failed to execute required Python interpreter: {exc}"],
-        )
-    except subprocess.CalledProcessError as exc:
-        details = (exc.stderr or "").strip()
-        suffix = f": {details}" if details else ""
-        return DoctorResult(
-            ok=False,
-            python_path=python_path,
-            python_version=None,
             errors=[
-                "Required Python interpreter returned non-zero exit code"
-                f"{suffix}"
+                "No Python interpreter found. "
+                "Set EPUB_READER_PYTHON or ensure HOME is set."
             ],
         )
 
-    try:
-        major, minor, micro = _parse_version_payload(completed.stdout)
-    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-        return DoctorResult(
-            ok=False,
-            python_path=python_path,
-            python_version=None,
-            errors=[f"Unable to parse Python version from doctor probe: {exc}"],
-        )
+    # Try each candidate in priority order; return on first success.
+    last_errors: list[str] = []
+    for python_path in candidates:
+        if not python_path.exists():
+            last_errors.append(
+                f"Python interpreter not found: {python_path}"
+            )
+            continue
 
-    python_version = f"{major}.{minor}.{micro}"
-    if (major, minor) < MIN_PYTHON_VERSION:
+        if not os.access(python_path, os.X_OK):
+            last_errors.append(
+                f"Python interpreter is not executable: {python_path}"
+            )
+            continue
+
+        command = [
+            str(python_path),
+            "-c",
+            (
+                "import json, sys; "
+                "print(json.dumps({'major': sys.version_info[0], "
+                "'minor': sys.version_info[1], 'micro': sys.version_info[2]}))"
+            ),
+        ]
+
+        try:
+            completed = runner(command)
+        except OSError as exc:
+            last_errors.append(
+                f"Failed to execute Python interpreter {python_path}: {exc}"
+            )
+            continue
+        except subprocess.CalledProcessError as exc:
+            details = (exc.stderr or "").strip()
+            suffix = f": {details}" if details else ""
+            last_errors.append(
+                f"Python interpreter {python_path} returned non-zero exit code"
+                f"{suffix}"
+            )
+            continue
+
+        try:
+            major, minor, micro = _parse_version_payload(completed.stdout)
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            last_errors.append(
+                f"Unable to parse Python version from {python_path}: {exc}"
+            )
+            continue
+
+        python_version = f"{major}.{minor}.{micro}"
+        if (major, minor) < MIN_PYTHON_VERSION:
+            last_errors.append(
+                f"Python {python_version} at {python_path} "
+                f"is below minimum 3.10."
+            )
+            continue
+
         return DoctorResult(
-            ok=False,
+            ok=True,
             python_path=python_path,
             python_version=python_version,
-            errors=[
-                "Required Python interpreter version "
-                f"{python_version} is below minimum 3.10."
-            ],
+            errors=[],
         )
 
+    # All candidates failed.
     return DoctorResult(
-        ok=True,
-        python_path=python_path,
-        python_version=python_version,
-        errors=[],
+        ok=False,
+        python_path=candidates[0],
+        python_version=None,
+        errors=last_errors,
     )

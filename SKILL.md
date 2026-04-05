@@ -1,51 +1,126 @@
 ---
 name: holo-epub-reader
-description: 解析 EPUB 为 LLM 友好的 Markdown/图像块并验证输出完整性。用于需要从 EPUB 提取章节文本、目录结构、图片与 manifest 的任务。
+description: >-
+  Use when you need to extract text, images, or chapter structure from EPUB
+  files into LLM-friendly Markdown. Trigger on any mention of EPUB parsing,
+  ebook text extraction, epub-to-markdown conversion, or extracting
+  chapters/images/TOC from .epub files — even if the user just says "read
+  this epub" or "get text from this ebook".
+  解析 EPUB 为 LLM 友好的 Markdown 文本/图像块。
 homepage: https://github.com/helebest/holo-epub-reader
 ---
 
-# Epub Reader
+# holo-epub-reader
 
-将 EPUB 文件解析为 LLM 友好的文本/图像块，并验证输出。
+Parse EPUB files into LLM-friendly Markdown + images with output validation. Zero external dependencies (Python stdlib only).
 
-## 前置条件
+## Paths
 
-1. OpenClaw 全局 Python 环境存在：`$HOME/.openclaw/.venv/bin/python3`
-2. EPUB 文件路径可读
-3. 输出目录可写
+Replace `<skill-dir>` below with the actual installed skill directory:
+- **Claude Code plugin**: `~/.claude/plugins/cache/.../holo-epub-reader/<version>`
+- **Codex CLI**: `~/.codex/skills/holo-epub-reader`
+- **OpenClaw**: the deployed skill path
 
-## 使用方法
+## When to Use
 
-### 1) 环境检查
+- Extract chapter text from EPUB into clean Markdown
+- Get table of contents and heading structure from EPUB metadata
+- Extract images alongside text content
+- Validate that EPUB output is complete (all referenced images exist)
+
+## When NOT to Use
+
+- PDF files — this only handles EPUB (.epub)
+- DRM-protected EPUB files — ZIP extraction will fail
+- Already-extracted text or Markdown files
+
+## Prerequisites
+
+- Python >= 3.10
+- EPUB file must be readable
+- Output directory must be writable
+
+## Quick Start
+
+### 1) Environment check
 
 ```bash
-bash {baseDir}/scripts/doctor.sh
+bash <skill-dir>/scripts/doctor.sh
 ```
 
-### 2) 解析 EPUB 文件
+### 2) Parse EPUB
 
 ```bash
-# 解析文件（输出目录必填）
-bash {baseDir}/scripts/parse.sh <epub文件路径> <输出目录>
+bash <skill-dir>/scripts/parse.sh /path/to/book.epub /path/to/output
 ```
 
-### 3) 验证输出
+### 3) Validate output
 
 ```bash
-bash {baseDir}/scripts/validate.sh <输出目录>
+bash <skill-dir>/scripts/validate.sh /path/to/output
 ```
 
-## 工作流程
+## CLI Flags
 
-1. 运行 `doctor.sh` 检查运行环境
-2. 使用 `parse.sh` 解析 EPUB
-3. 检查生成的 `content.md`、`manifest.json` 和 `images/`
-4. 使用 `validate.sh` 验证输出文件完整性
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--no-images` | off | Skip extracting image files (still emits image blocks in Markdown) |
+| `--keep-nav` | off | Keep navigation/header/footer content instead of stripping |
+| `--max-chunk` | 1200 | Maximum characters per text block |
+| `--quiet` | off | Suppress manifest JSON summary output |
 
-## 输出格式
+## Output Structure
 
-默认输出为 Markdown (`content.md`)，包含：
-- 文本块
-- 标题层级
-- 图像（保存到 `images/` 目录）
-- 元数据 (`manifest.json`)
+```
+output-dir/
+├── content.md       # Markdown with auto-generated TOC, chapters, headings, images
+├── manifest.json    # Metadata: title, creator, block count, image list, timestamps
+└── images/          # Extracted images preserving EPUB paths (unless --no-images)
+    └── OEBPS/images/
+        └── cover.jpg
+```
+
+**content.md example:**
+
+```markdown
+# Book Title
+
+_Author Name_
+
+---
+
+## Table of Contents
+- [Chapter One](#chapter-one)
+- [Chapter Two](#chapter-two)
+
+---
+
+## Chapter One
+
+Paragraph text here...
+
+![Alt text](images/OEBPS/images/fig1.jpg)
+
+## Chapter Two
+
+More text...
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | Parse or validation error |
+| 2 | Doctor check failed (Python not found or version too low) |
+
+## Environment Configuration
+
+Set `EPUB_READER_PYTHON` to override Python interpreter discovery:
+
+```bash
+export EPUB_READER_PYTHON=/usr/bin/python3.12
+bash <skill-dir>/scripts/parse.sh book.epub output/
+```
+
+Resolution order: `$EPUB_READER_PYTHON` > `$HOME/.openclaw/.venv/bin/python3` > system `python3`

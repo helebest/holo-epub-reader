@@ -7,6 +7,31 @@
 
 Parse EPUB files into LLM-friendly text and image blocks.
 
+## 安装
+
+### Claude Code（插件方式）
+
+在 Claude Code 中运行：
+
+```
+/plugin marketplace add helebest/holo-epub-reader
+/plugin install holo-epub-reader@holo-epub-reader
+```
+
+升级时 Claude Code 会自动检测新版本并提示。
+
+### Codex CLI
+
+在 Codex 中请求安装：
+
+> Install the holo-epub-reader skill from https://github.com/helebest/holo-epub-reader
+
+### OpenClaw
+
+```bash
+./openclaw_deploy_skill.sh <target-path>
+```
+
 ## 开发
 
 ```bash
@@ -22,29 +47,6 @@ uv run pytest --cov=holo_epub_reader --cov-report=term-missing --cov-fail-under=
 - `CI` workflow: 在 `push main` 和 `pull_request -> main` 触发，矩阵测试 Python `3.10 / 3.11 / 3.12`，并执行 90% 覆盖率门禁。
 - `Release` workflow: 在推送 `v*` tag 时触发，执行测试、构建 `sdist/wheel`、创建 GitHub Release。
 - 可选发布到 PyPI: 配置仓库 secret `PYPI_API_TOKEN` 后，Release workflow 会自动执行 `uv publish`。
-
-## 部署
-
-```bash
-# 部署到 OpenClaw skills 目录
-./openclaw_deploy_skill.sh <target-path>
-```
-
-部署后的目录结构：
-
-```
-skill-name/
-├── SKILL.md
-├── holo_epub_reader/
-│   ├── cli.py
-│   ├── doctor.py
-│   ├── reader.py
-│   └── ...
-└── scripts/
-    ├── doctor.sh
-    ├── parse.sh
-    └── validate.sh
-```
 
 ## 使用
 
@@ -62,9 +64,23 @@ bash <skill-path>/scripts/validate.sh <输出目录>
 也可直接使用 Python CLI：
 
 ```bash
-$HOME/.openclaw/.venv/bin/python3 -m holo_epub_reader.cli doctor
-$HOME/.openclaw/.venv/bin/python3 -m holo_epub_reader.cli parse <epub文件路径> --out <输出目录>
-$HOME/.openclaw/.venv/bin/python3 -m holo_epub_reader.cli validate <输出目录>
+python3 -m holo_epub_reader.cli doctor
+python3 -m holo_epub_reader.cli parse <epub文件路径> --out <输出目录>
+python3 -m holo_epub_reader.cli validate <输出目录>
+```
+
+### 多平台支持
+
+Shell 脚本自动按以下优先级查找 Python：
+
+1. `$EPUB_READER_PYTHON` 环境变量（显式指定）
+2. `$HOME/.openclaw/.venv/bin/python3`（OpenClaw 优先）
+3. 系统 `python3`（PATH 中）
+
+```bash
+# 指定 Python 解释器
+export EPUB_READER_PYTHON=/usr/bin/python3.12
+bash scripts/parse.sh book.epub output/
 ```
 
 ## 输出

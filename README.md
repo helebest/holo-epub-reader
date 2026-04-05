@@ -76,6 +76,9 @@ Shell 脚本自动按以下优先级查找 Python：
 1. `$EPUB_READER_PYTHON` 环境变量（显式指定）
 2. `$HOME/.openclaw/.venv/bin/python3`（OpenClaw 优先）
 3. 系统 `python3`（PATH 中）
+4. 系统 `python`（Git Bash / Windows 兼容）
+
+直接使用 Python CLI 时（`python3 -m holo_epub_reader.cli ...`），当前解释器（`sys.executable`）也会作为候选。
 
 ```bash
 # 指定 Python 解释器

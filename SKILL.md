@@ -80,6 +80,10 @@ output-dir/
         └── cover.jpg
 ```
 
+> **Note**: `--no-images` skips image file extraction but preserves image
+> references in Markdown (e.g. `![alt](images/...)`) for LLM semantic context.
+> If you need portable Markdown without broken image links, do not use this flag.
+
 **content.md example:**
 
 ```markdown
@@ -123,4 +127,6 @@ export EPUB_READER_PYTHON=/usr/bin/python3.12
 bash <skill-dir>/scripts/parse.sh book.epub output/
 ```
 
-Resolution order: `$EPUB_READER_PYTHON` > `$HOME/.openclaw/.venv/bin/python3` > system `python3`
+Shell script resolution order: `$EPUB_READER_PYTHON` > `$HOME/.openclaw/.venv/bin/python3` > `python3` > `python`
+
+When using the Python CLI directly (`python3 -m holo_epub_reader.cli ...`), the current interpreter (`sys.executable`) is also a candidate.

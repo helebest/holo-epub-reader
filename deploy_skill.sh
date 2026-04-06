@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
 # Install / update holo-epub-reader skill
-# Usage: ./install.sh [--target <path>]
+# Usage: ./deploy_skill.sh [--target <path>]
 #
 # Default: ~/.agents/skills/holo-epub-reader
-# Override: ./install.sh --target /path/to/skills/holo-epub-reader
+# Override: ./deploy_skill.sh --target /path/to/skills/holo-epub-reader
 #
 # Only copies runtime files: SKILL.md + scripts/
 #
@@ -66,5 +66,5 @@ bash "$INSTALL_DIR/scripts/doctor.sh"
 echo ""
 echo "=== $SKILL_NAME 就绪 ==="
 echo "安装位置: $INSTALL_DIR"
-echo "升级: 在源仓库 git pull 后重新运行 bash install.sh --target $INSTALL_DIR"
+echo "升级: 在源仓库 git pull 后重新运行 bash deploy_skill.sh --target $INSTALL_DIR"
 echo "卸载: rm -rf $INSTALL_DIR"

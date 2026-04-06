@@ -20,13 +20,16 @@ _check_python_version() {
 }
 
 # _find_project_venv: detect .venv in caller's working directory (cross-platform)
+# Returns absolute path so it survives later cd.
 _find_project_venv() {
-    if [ -x ".venv/Scripts/python.exe" ]; then
-        echo ".venv/Scripts/python.exe"
-    elif [ -x ".venv/bin/python3" ]; then
-        echo ".venv/bin/python3"
-    elif [ -x ".venv/bin/python" ]; then
-        echo ".venv/bin/python"
+    local _cwd
+    _cwd="$(pwd)"
+    if [ -x "$_cwd/.venv/Scripts/python.exe" ]; then
+        echo "$_cwd/.venv/Scripts/python.exe"
+    elif [ -x "$_cwd/.venv/bin/python3" ]; then
+        echo "$_cwd/.venv/bin/python3"
+    elif [ -x "$_cwd/.venv/bin/python" ]; then
+        echo "$_cwd/.venv/bin/python"
     fi
 }
 

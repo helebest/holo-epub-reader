@@ -8,18 +8,16 @@ description: >-
   this epub" or "get text from this ebook".
   解析 EPUB 为 LLM 友好的 Markdown 文本/图像块。
 homepage: https://github.com/helebest/holo-epub-reader
+license: MIT
+compatibility: "Python >= 3.10, zero external dependencies (stdlib only)"
+metadata:
+  version: "0.3.0"
+  author: holo
 ---
 
 # holo-epub-reader
 
 Parse EPUB files into LLM-friendly Markdown + images with output validation. Zero external dependencies (Python stdlib only).
-
-## Paths
-
-Replace `<skill-dir>` below with the actual installed skill directory:
-- **Claude Code plugin**: `~/.claude/plugins/cache/.../holo-epub-reader/<version>`
-- **Codex CLI**: `~/.codex/skills/holo-epub-reader`
-- **OpenClaw**: the deployed skill path
 
 ## When to Use
 
@@ -36,7 +34,7 @@ Replace `<skill-dir>` below with the actual installed skill directory:
 
 ## Prerequisites
 
-- Python >= 3.10
+- Python >= 3.10 (no additional packages required, stdlib only)
 - EPUB file must be readable
 - Output directory must be writable
 
@@ -45,19 +43,19 @@ Replace `<skill-dir>` below with the actual installed skill directory:
 ### 1) Environment check
 
 ```bash
-bash <skill-dir>/scripts/doctor.sh
+bash ./scripts/doctor.sh
 ```
 
 ### 2) Parse EPUB
 
 ```bash
-bash <skill-dir>/scripts/parse.sh /path/to/book.epub /path/to/output
+bash ./scripts/parse.sh /path/to/book.epub /path/to/output
 ```
 
 ### 3) Validate output
 
 ```bash
-bash <skill-dir>/scripts/validate.sh /path/to/output
+bash ./scripts/validate.sh /path/to/output
 ```
 
 ## CLI Flags
@@ -118,15 +116,20 @@ More text...
 | 1 | Parse or validation error |
 | 2 | Doctor check failed (Python not found or version too low) |
 
+## Edge Cases
+
+- **Very large EPUBs**: No size limit, but use `--max-chunk` to control block size
+- **DRM-protected EPUBs**: ZIP extraction fails with exit code 1
+- **Missing images in EPUB**: Reported in `manifest.json` `missing_images` array, not a fatal error
+- **No spine items**: Produces valid but empty output (0 blocks)
+
 ## Environment Configuration
 
 Set `EPUB_READER_PYTHON` to override Python interpreter discovery:
 
 ```bash
 export EPUB_READER_PYTHON=/usr/bin/python3.12
-bash <skill-dir>/scripts/parse.sh book.epub output/
+bash ./scripts/parse.sh book.epub output/
 ```
 
 Shell script resolution order: `$EPUB_READER_PYTHON` > `$HOME/.openclaw/.venv/bin/python3` > `python3` > `python`
-
-When using the Python CLI directly (`python3 -m holo_epub_reader.cli ...`), the current interpreter (`sys.executable`) is also a candidate.

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from holo_epub_reader import cli
-from holo_epub_reader.doctor import DoctorResult
-from holo_epub_reader.exit_codes import EXIT_DOCTOR_ERROR, EXIT_ERROR, EXIT_OK
+import cli
+from doctor import DoctorResult
+from exit_codes import EXIT_DOCTOR_ERROR, EXIT_ERROR, EXIT_OK
 
 
 def _doctor_ok() -> DoctorResult:

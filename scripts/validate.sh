@@ -10,14 +10,13 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
-OUTPUT_DIR="$1"
+OUTPUT_DIR="$(cd "$1" && pwd)"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/_resolve_python.sh"
 
-cd "$PROJECT_ROOT"
+cd "$SCRIPT_DIR"
 
-exec "$PYTHON_CMD" -m holo_epub_reader.cli validate "$OUTPUT_DIR"
+exec "$PYTHON_CMD" cli.py validate "$OUTPUT_DIR"
 

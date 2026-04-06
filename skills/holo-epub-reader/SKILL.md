@@ -8,26 +8,25 @@ description: >-
   this epub" or "get text from this ebook".
   解析 EPUB 为 LLM 友好的 Markdown 文本/图像块。
 homepage: https://github.com/helebest/holo-epub-reader
+license: MIT
+compatibility: "Python >= 3.10, zero external dependencies (stdlib only)"
+metadata:
+  version: "0.3.0"
+  author: holo
 ---
 
 # holo-epub-reader (Claude Code plugin entry)
 
-This is the Claude Code plugin entry point. The runtime files (scripts/ and
-holo_epub_reader/) are at the plugin root — two directories above this file.
+This is the Claude Code plugin entry point. All runtime files (scripts/*.py
+and scripts/*.sh) are at the plugin root, two directories above this file.
 
-For full documentation, see the root SKILL.md. Below is the essential usage:
+For full documentation, see the root SKILL.md.
+
+Essential usage (replace `$PLUGIN_ROOT` with the plugin cache path):
 
 ```bash
-# Determine the plugin root (parent of skills/)
-PLUGIN_ROOT="<two levels up from this SKILL.md>"
-
-# Environment check
 bash "$PLUGIN_ROOT/scripts/doctor.sh"
-
-# Parse EPUB
 bash "$PLUGIN_ROOT/scripts/parse.sh" /path/to/book.epub /path/to/output
-
-# Validate output
 bash "$PLUGIN_ROOT/scripts/validate.sh" /path/to/output
 ```
 

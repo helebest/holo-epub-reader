@@ -9,6 +9,6 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/_resolve_python.sh"
 
-cd "$PROJECT_ROOT"
+cd "$SCRIPT_DIR"
 
-exec "$PYTHON_CMD" -m holo_epub_reader.cli doctor
+exec "$PYTHON_CMD" cli.py doctor

@@ -21,6 +21,9 @@ epub_books/
 # OS
 .DS_Store
 
+# Claude Code local artifacts
+.claude/
+
 # Test artifacts
 .pytest_cache/
 .coverage

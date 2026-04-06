@@ -38,15 +38,4 @@ jobs:
         run: uv sync --extra dev --frozen
 
       - name: Run tests with coverage gate
-        run: uv run pytest --cov=holo_epub_reader --cov-report=term-missing --cov-fail-under=90
-
-      - name: Build package artifacts
-        if: matrix.python-version == '3.12'
-        run: uv build
-
-      - name: Upload dist artifacts
-        if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v7
-        with:
-          name: dist
-          path: dist/*
+        run: uv run pytest

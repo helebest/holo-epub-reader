@@ -9,22 +9,19 @@ Parse EPUB files into LLM-friendly text and image blocks.
 
 ## 安装
 
-### Claude Code（插件方式）
+```bash
+git clone https://github.com/helebest/holo-epub-reader.git
+cd holo-epub-reader && bash install.sh
+```
 
-在 Claude Code 中运行：
+升级？再跑一次 `bash install.sh`。卸载？`rm -rf` 目录。
+
+### Claude Code（插件方式）
 
 ```
 /plugin marketplace add helebest/holo-epub-reader
 /plugin install holo-epub-reader@holo-epub-reader
 ```
-
-升级时 Claude Code 会自动检测新版本并提示。
-
-### Codex CLI
-
-在 Codex 中请求安装：
-
-> Install the holo-epub-reader skill from https://github.com/helebest/holo-epub-reader
 
 ### OpenClaw
 
@@ -32,58 +29,33 @@ Parse EPUB files into LLM-friendly text and image blocks.
 ./openclaw_deploy_skill.sh <target-path>
 ```
 
-## 开发
-
-```bash
-# 安装依赖（含测试工具）
-uv sync --extra dev
-
-# 运行测试（覆盖率门禁 90%+）
-uv run pytest --cov=holo_epub_reader --cov-report=term-missing --cov-fail-under=90
-```
-
-## CI / CD
-
-- `CI` workflow: 在 `push main` 和 `pull_request -> main` 触发，矩阵测试 Python `3.10 / 3.11 / 3.12`，并执行 90% 覆盖率门禁。
-- `Release` workflow: 在推送 `v*` tag 时触发，执行测试、构建 `sdist/wheel`、创建 GitHub Release。
-- 可选发布到 PyPI: 配置仓库 secret `PYPI_API_TOKEN` 后，Release workflow 会自动执行 `uv publish`。
-
 ## 使用
 
 ```bash
-# 前置检查（必须先通过）
-bash <skill-path>/scripts/doctor.sh
+# 前置检查
+bash scripts/doctor.sh
 
-# 解析 EPUB（输出目录必填）
-bash <skill-path>/scripts/parse.sh <epub文件路径> <输出目录>
+# 解析 EPUB
+bash scripts/parse.sh <epub文件路径> <输出目录> [--no-images] [--keep-nav] [--max-chunk N] [--quiet]
 
 # 验证输出
-bash <skill-path>/scripts/validate.sh <输出目录>
+bash scripts/validate.sh <输出目录>
 ```
 
-也可直接使用 Python CLI：
+### 多平台 Python 解析
 
-```bash
-python3 -m holo_epub_reader.cli doctor
-python3 -m holo_epub_reader.cli parse <epub文件路径> --out <输出目录>
-python3 -m holo_epub_reader.cli validate <输出目录>
-```
-
-### 多平台支持
-
-Shell 脚本自动按以下优先级查找 Python：
+Shell 脚本自动按以下优先级查找 Python >= 3.10：
 
 1. `$EPUB_READER_PYTHON` 环境变量（显式指定）
 2. `$HOME/.openclaw/.venv/bin/python3`（OpenClaw 优先）
 3. 系统 `python3`（PATH 中）
 4. 系统 `python`（Git Bash / Windows 兼容）
 
-直接使用 Python CLI 时（`python3 -m holo_epub_reader.cli ...`），当前解释器（`sys.executable`）也会作为候选。
+## 开发
 
 ```bash
-# 指定 Python 解释器
-export EPUB_READER_PYTHON=/usr/bin/python3.12
-bash scripts/parse.sh book.epub output/
+uv sync --extra dev
+uv run pytest
 ```
 
 ## 输出

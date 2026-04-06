@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 
-from holo_epub_reader.doctor import DoctorResult, run_doctor
+from doctor import DoctorResult, run_doctor
 
 
 def _ok_runner(_command):

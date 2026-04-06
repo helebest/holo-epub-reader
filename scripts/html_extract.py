@@ -4,8 +4,8 @@ from html.parser import HTMLParser
 from typing import List, Optional, Tuple
 import posixpath
 
-from .epub import resolve_href
-from .models import Block, ImageRef
+from epub import resolve_href
+from models import Block, ImageRef
 
 BLOCK_TEXT_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "pre"}
 HEADING_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6"}

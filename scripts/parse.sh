@@ -10,16 +10,15 @@ if [ "$#" -lt 2 ]; then
     exit 1
 fi
 
-EPUB_PATH="$1"
-OUTPUT_DIR="$2"
+EPUB_PATH="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+OUTPUT_DIR="$(mkdir -p "$2" && cd "$2" && pwd)"
 shift 2
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 source "$SCRIPT_DIR/_resolve_python.sh"
 
-cd "$PROJECT_ROOT"
+cd "$SCRIPT_DIR"
 
-exec "$PYTHON_CMD" -m holo_epub_reader.cli parse "$EPUB_PATH" --out "$OUTPUT_DIR" "$@"
+exec "$PYTHON_CMD" cli.py parse "$EPUB_PATH" --out "$OUTPUT_DIR" "$@"
 

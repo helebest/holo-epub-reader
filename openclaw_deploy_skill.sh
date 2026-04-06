@@ -75,7 +75,6 @@ mkdir -p "$TARGET_PATH"
 DEPLOY_ITEMS=(
     "SKILL.md"
     "scripts"
-    "holo_epub_reader"
 )
 
 for item in "${DEPLOY_ITEMS[@]}"; do

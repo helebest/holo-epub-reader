@@ -5,9 +5,9 @@ import json
 import sys
 from pathlib import Path
 
-from .doctor import DoctorResult, run_doctor
-from .exit_codes import EXIT_DOCTOR_ERROR, EXIT_ERROR, EXIT_OK
-from .reader import parse_epub, validate_output
+from doctor import DoctorResult, run_doctor
+from exit_codes import EXIT_DOCTOR_ERROR, EXIT_ERROR, EXIT_OK
+from reader import parse_epub, validate_output
 
 
 def _emit_doctor_failure(result: DoctorResult) -> None:

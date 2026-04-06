@@ -1,10 +1,10 @@
 [project]
 name = "holo-epub-reader"
-version = "0.2.0"
-description = "EPUB reader that extracts text and images into LLM-friendly blocks."
+version = "0.3.0"
+description = "EPUB reader skill that extracts text and images into LLM-friendly blocks."
 readme = "README.md"
 requires-python = ">=3.10"
-authors = [{ name = "Codex" }]
+authors = [{ name = "holo" }]
 license = { text = "MIT" }
 dependencies = []
 
@@ -14,16 +14,7 @@ dev = [
     "pytest-cov>=5.0",
 ]
 
-[project.scripts]
-holo-epub-reader = "holo_epub_reader.cli:main"
-
-[build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["holo_epub_reader"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=holo_epub_reader --cov-report=term-missing --cov-fail-under=90"
+pythonpath = ["scripts"]
+addopts = "--cov=scripts --cov-report=term-missing --cov-fail-under=90"

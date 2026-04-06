@@ -6,10 +6,10 @@ import zipfile
 
 import pytest
 
-from holo_epub_reader.epub import _first_text, read_container, resolve_href
-from holo_epub_reader.html_extract import _chunk_text, _normalize_title, _is_placeholder_title
-from holo_epub_reader.models import Block
-from holo_epub_reader.reader import EpubParseError, parse_epub, validate_output
+from epub import _first_text, read_container, resolve_href
+from html_extract import _chunk_text, _normalize_title, _is_placeholder_title
+from models import Block
+from reader import EpubParseError, parse_epub, validate_output
 
 
 def _create_epub(

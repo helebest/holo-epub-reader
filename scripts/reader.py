@@ -270,11 +270,15 @@ def parse_epub(
         missing_images: List[str] = []
         if include_images:
             images_root = out_dir / "images"
+            safe_root = images_root.resolve()
             for href in sorted(image_refs.keys()):
                 if href not in zip_names:
                     missing_images.append(href)
                     continue
-                target_path = images_root / href
+                target_path = (images_root / href).resolve()
+                if not target_path.is_relative_to(safe_root):
+                    missing_images.append(href)
+                    continue
                 _ensure_parent(target_path)
                 with target_path.open("wb") as handle:
                     handle.write(zf.read(href))

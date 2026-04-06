@@ -417,6 +417,71 @@ def test_parse_invalid_ol_start_attribute(tmp_path: Path) -> None:
     assert "1. Item" in content
 
 
+def test_parse_rejects_path_traversal_in_image(tmp_path: Path) -> None:
+    """Malicious EPUB with ../../ in image href must not write outside output dir."""
+    root = tmp_path / "malicious"
+    meta_inf = root / "META-INF"
+    oebps = root / "OEBPS"
+    meta_inf.mkdir(parents=True)
+    oebps.mkdir(parents=True)
+
+    container_xml = """<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" />
+  </rootfiles>
+</container>
+"""
+    (meta_inf / "container.xml").write_text(container_xml, encoding="utf-8")
+
+    # After resolve_href normalizes "images/../../../../evil.txt" relative to
+    # "OEBPS", the key becomes "../../evil.txt". The ZIP entry must match this
+    # normalized name for the traversal to succeed.
+    normalized_href = "../../evil.txt"
+    content_opf = f"""<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Evil</dc:title>
+  </metadata>
+  <manifest>
+    <item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml" />
+    <item id="img1" href="images/../../../../evil.txt" media-type="image/jpeg" />
+  </manifest>
+  <spine><itemref idref="ch1" /></spine>
+</package>
+"""
+    (oebps / "content.opf").write_text(content_opf, encoding="utf-8")
+
+    ch1 = """<?xml version="1.0"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<body>
+  <h1>Chapter One</h1>
+  <img src="images/../../../../evil.txt" alt="evil" />
+</body>
+</html>
+"""
+    (oebps / "ch1.xhtml").write_text(ch1, encoding="utf-8")
+
+    epub_path = tmp_path / "evil.epub"
+    with zipfile.ZipFile(epub_path, "w") as zf:
+        for path in root.rglob("*"):
+            if path.is_file():
+                zf.write(path, path.relative_to(root))
+        # ZIP entry exists so the code reaches the path containment check
+        # (not short-circuited by the "not in zip_names" guard)
+        zf.writestr(normalized_href, b"EVIL PAYLOAD")
+
+    out_dir = tmp_path / "out"
+    manifest = parse_epub(epub_path, out_dir, include_images=True)
+
+    # The evil file must NOT exist outside out_dir
+    evil_path = tmp_path / "evil.txt"
+    assert not evil_path.exists(), "Path traversal: file written outside output dir!"
+
+    # The exact traversal href should be rejected into missing_images
+    assert normalized_href in manifest["missing_images"]
+
+
 def test_validate_output_reports_missing_image_file(tmp_path: Path) -> None:
     out_dir = tmp_path / "out"
     out_dir.mkdir(parents=True)

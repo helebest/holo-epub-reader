@@ -9,18 +9,16 @@ Parse EPUB files into LLM-friendly text and image blocks.
 
 ## 安装
 
+### Claude Code
+
 ```bash
-git clone https://github.com/helebest/holo-epub-reader.git
-cd holo-epub-reader && bash install.sh
+bash install.sh --target ~/.claude/skills/holo-epub-reader
 ```
 
-升级？再跑一次 `bash install.sh`。卸载？`rm -rf` 目录。
+### Codex CLI
 
-### Claude Code（插件方式）
-
-```
-/plugin marketplace add helebest/holo-epub-reader
-/plugin install holo-epub-reader@holo-epub-reader
+```bash
+bash install.sh --target ~/.codex/skills/holo-epub-reader
 ```
 
 ### OpenClaw
@@ -28,6 +26,18 @@ cd holo-epub-reader && bash install.sh
 ```bash
 ./openclaw_deploy_skill.sh <target-path>
 ```
+
+### 通用安装
+
+```bash
+# 默认安装到 ~/.agents/skills/holo-epub-reader
+bash install.sh
+
+# 指定任意目录
+bash install.sh --target /path/to/skills/holo-epub-reader
+```
+
+升级？再跑一次 `bash install.sh`。卸载？`rm -rf` 安装目录。
 
 ## 使用
 

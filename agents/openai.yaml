@@ -1,4 +1,0 @@
-interface:
-  display_name: "EPUB Reader"
-  short_description: "Parse EPUB files into LLM-friendly Markdown"
-  default_prompt: "Parse this EPUB file and extract its text into Markdown."

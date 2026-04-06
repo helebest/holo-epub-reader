@@ -57,9 +57,10 @@ bash scripts/validate.sh <输出目录>
 Shell 脚本自动按以下优先级查找 Python >= 3.10：
 
 1. `$EPUB_READER_PYTHON` 环境变量（显式指定）
-2. `$HOME/.openclaw/.venv/bin/python3`（OpenClaw 优先）
-3. 系统 `python3`（PATH 中）
-4. 系统 `python`（Git Bash / Windows 兼容）
+2. 项目 `.venv`（自动检测 CWD 下的虚拟环境）
+3. `$HOME/.openclaw/.venv/bin/python3`（OpenClaw）
+4. 系统 `python3`（PATH 中）
+5. 系统 `python`（Git Bash / Windows 兼容）
 
 ## 开发
 

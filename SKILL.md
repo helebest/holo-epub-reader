@@ -132,4 +132,4 @@ export EPUB_READER_PYTHON=/usr/bin/python3.12
 bash ./scripts/parse.sh book.epub output/
 ```
 
-Shell script resolution order: `$EPUB_READER_PYTHON` > `$HOME/.openclaw/.venv/bin/python3` > `python3` > `python`
+Shell script resolution order: `$EPUB_READER_PYTHON` > project `.venv` in CWD > `$HOME/.openclaw/.venv/bin/python3` > `python3` > `python`

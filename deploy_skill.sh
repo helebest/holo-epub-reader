@@ -6,6 +6,8 @@
 # Default: ~/.agents/skills/holo-epub-reader
 # Override: ./install.sh --target /path/to/skills/holo-epub-reader
 #
+# Only copies runtime files: SKILL.md + scripts/
+#
 
 set -euo pipefail
 
@@ -33,21 +35,30 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-# ---- Install or update ----
-if [ "$SCRIPT_DIR" = "$INSTALL_DIR" ]; then
-  # Running from inside the install directory — just update
-  echo "使用当前目录: $INSTALL_DIR"
-  if [ -d "$INSTALL_DIR/.git" ]; then
-    cd "$INSTALL_DIR" && git pull --ff-only || true
-  fi
-elif [ -d "$INSTALL_DIR/.git" ]; then
-  echo "已存在，执行更新..."
-  cd "$INSTALL_DIR" && git pull --ff-only
+# ---- Source: use repo checkout or clone to temp ----
+if [ -f "$SCRIPT_DIR/SKILL.md" ]; then
+  # Running from inside the repo
+  SRC_DIR="$SCRIPT_DIR"
 else
-  echo "安装 $SKILL_NAME 到: $INSTALL_DIR"
-  mkdir -p "$(dirname "$INSTALL_DIR")"
-  git clone https://github.com/helebest/$SKILL_NAME.git "$INSTALL_DIR"
+  # Clone to temp for copying
+  SRC_DIR="$(mktemp -d)"
+  trap 'rm -rf "$SRC_DIR"' EXIT
+  git clone --depth 1 https://github.com/helebest/$SKILL_NAME.git "$SRC_DIR"
 fi
+
+# ---- Deploy runtime files only ----
+echo "安装 $SKILL_NAME 到: $INSTALL_DIR"
+mkdir -p "$INSTALL_DIR"
+
+for item in SKILL.md scripts; do
+  if [ -e "$SRC_DIR/$item" ]; then
+    rm -rf "$INSTALL_DIR/$item"
+    cp -r "$SRC_DIR/$item" "$INSTALL_DIR/"
+  fi
+done
+
+# Clean __pycache__
+find "$INSTALL_DIR" -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 
 # ---- Verify environment ----
 bash "$INSTALL_DIR/scripts/doctor.sh"
@@ -55,5 +66,5 @@ bash "$INSTALL_DIR/scripts/doctor.sh"
 echo ""
 echo "=== $SKILL_NAME 就绪 ==="
 echo "安装位置: $INSTALL_DIR"
-echo "升级: cd $INSTALL_DIR && bash install.sh"
+echo "升级: 在源仓库 git pull 后重新运行 bash install.sh --target $INSTALL_DIR"
 echo "卸载: rm -rf $INSTALL_DIR"

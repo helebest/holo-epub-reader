@@ -12,32 +12,32 @@ Parse EPUB files into LLM-friendly text and image blocks.
 ### Claude Code
 
 ```bash
-bash install.sh --target ~/.claude/skills/holo-epub-reader
+bash deploy_skill.sh --target ~/.claude/skills/holo-epub-reader
 ```
 
 ### Codex CLI
 
 ```bash
-bash install.sh --target ~/.codex/skills/holo-epub-reader
+bash deploy_skill.sh --target ~/.codex/skills/holo-epub-reader
 ```
 
 ### OpenClaw
 
 ```bash
-./openclaw_deploy_skill.sh <target-path>
+bash deploy_skill.sh --target <target-path>
 ```
 
-### 通用安装
+### 通用
 
 ```bash
 # 默认安装到 ~/.agents/skills/holo-epub-reader
-bash install.sh
+bash deploy_skill.sh
 
 # 指定任意目录
-bash install.sh --target /path/to/skills/holo-epub-reader
+bash deploy_skill.sh --target /path/to/skills/holo-epub-reader
 ```
 
-升级？再跑一次 `bash install.sh`。卸载？`rm -rf` 安装目录。
+升级？再跑一次 `bash deploy_skill.sh`。卸载？`rm -rf` 安装目录。
 
 ## 使用
 
